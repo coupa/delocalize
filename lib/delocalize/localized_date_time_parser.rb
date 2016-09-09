@@ -8,12 +8,14 @@ module Delocalize
       '%B' => "(#{Date::MONTHNAMES.compact.join('|')})",      # long month name
       '%b' => "(#{Date::ABBR_MONTHNAMES.compact.join('|')})", # short month name
       '%m' => "(\\d{1,2})",                                   # numeric month
+      '%-m' => "(\\d{1,2})",                                  # numeric month (no padding)
       '%A' => "(#{Date::DAYNAMES.join('|')})",                # full day name
       '%a' => "(#{Date::ABBR_DAYNAMES.join('|')})",           # short day name
       '%Y' => "(\\d{4})",                                     # long year
       '%y' => "(\\d{2})",                                     # short year
       '%e' => "(\\s\\d|\\d{2})",                              # short day
       '%d' => "(\\d{1,2})",                                   # full day
+      '%-d' => "(\\d{1,2})",                                  # full day (no padding)
       '%H' => "(\\d{2})",                                     # hour (24)
       '%M' => "(\\d{2})",                                     # minute
       '%S' => "(\\d{2})"                                      # second
@@ -29,6 +31,8 @@ module Delocalize
         input_formats(type).each do |original_format|
           next unless datetime =~ /^#{apply_regex(original_format)}$/
 
+          # strptime doesn't accept '%-m' nor '%-d' format while it needs to be feeded into strftime in that format
+          original_format.gsub!(/%-m|%-d/, "%-m" => "%m", "%-d" => "%d")
           datetime = DateTime.strptime(datetime, original_format)
           return Date == type ?
             datetime.to_date :
