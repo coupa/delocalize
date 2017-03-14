@@ -32,8 +32,8 @@ module Delocalize
           next unless datetime =~ /^#{apply_regex(original_format)}$/
 
           # strptime doesn't accept '%-m' nor '%-d' format while it needs to be feeded into strftime in that format
-          original_format.gsub!(/%-m|%-d/, "%-m" => "%m", "%-d" => "%d")
-          datetime = DateTime.strptime(datetime, original_format)
+          adjusted_format = original_format.gsub(/%-m|%-d/, "%-m" => "%m", "%-d" => "%d")
+          datetime = DateTime.strptime(datetime, adjusted_format)
           return Date == type ?
             datetime.to_date :
             Time.zone.local(datetime.year, datetime.mon, datetime.mday, datetime.hour, datetime.min, datetime.sec)
