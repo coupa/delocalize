@@ -7,11 +7,11 @@ require 'active_record'
 # let's hack into ActiveRecord a bit - everything at the lowest possible level, of course, so we minimalize side effects
 ActiveRecord::ConnectionAdapters::Column.class_eval do
   def date?
-    klass == Date
+    type == :date
   end
 
   def time?
-    klass == Time
+    type == :datetime
   end
 end
 
@@ -39,7 +39,7 @@ ActiveRecord::Base.class_eval do
   alias_method_chain :write_attribute, :localization
 
   protected
-  
+
   def self.define_method_attribute=(attr_name)
     if create_time_zone_conversion_attribute?(attr_name, columns_hash[attr_name])
       method_body, line = <<-EOV, __LINE__ + 1
@@ -99,7 +99,11 @@ end
 module ActiveRecord
   class Attribute
     def value_before_type_cast
-      type.number? && came_from_user? ? ::Numeric.parse_localized(@value_before_type_cast) : @value_before_type_cast
+      if %i(integer float decimal).include?(type.type) && came_from_user?
+        ::Numeric.parse_localized(@value_before_type_cast)
+      else
+        @value_before_type_cast
+      end
     end
   end
 end
