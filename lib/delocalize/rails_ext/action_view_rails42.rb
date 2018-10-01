@@ -16,11 +16,11 @@ ActionView::Helpers::Tags::TextField.class_eval do
         delimiter = @options.delete(:delimiter) || number_options[:delimiter]
         precision = @options.delete(:precision) || number_options[:precision]
         opts = { :separator => separator, :delimiter => delimiter, :precision => precision }
-        is_integer = (column.type == :integer) || column.cast_type.is_a?(ActiveRecord::Type::DecimalWithoutScale)
-        # integers don't need a precision
-        opts.merge!(:precision => 0) if is_integer
-
-        hidden_for_integer = field_type == 'hidden' && is_integer
+        if integer?(column)
+          # integers don't need a precision
+          opts[:precision] = 0
+          hidden_for_integer = (field_type == 'hidden')
+        end
 
         # the number will be formatted only if it has no numericality errors
         if object.respond_to?(:errors) && !Array(object.errors[@method_name]).try(:include?, 'is not a number')
@@ -36,4 +36,10 @@ ActionView::Helpers::Tags::TextField.class_eval do
   end
 
   alias_method_chain :render, :localization
+
+  private
+
+  def integer?(column)
+    column.type == :integer || (column.type == :decimal && column.scale.nil?)
+  end
 end
