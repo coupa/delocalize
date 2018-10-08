@@ -7,7 +7,10 @@ ActionView::Helpers::Tags::TextField.class_eval do
   include ActionView::Helpers::NumberHelper
 
   def render_with_localization
-    if object && (@options[:value].blank? || !@options[:value].is_a?(String)) && object.respond_to?(:column_for_attribute) && column = object.column_for_attribute(@method_name)
+    if object &&
+       (@options[:value].blank? || !@options[:value].is_a?(String)) &&
+       (object.respond_to?(:has_attribute?) && object.has_attribute?(@method_name))
+      column = object.column_for_attribute(@method_name)
       value = @options[:value] || object.send(@method_name)
 
       if column.number?
