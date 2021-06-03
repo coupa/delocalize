@@ -36,23 +36,22 @@ module Delocalize
 
     module ClassMethods
 
-      def define_method_attribute=(attr_name, owner:)
+      def define_method_attribute=(name, owner:)
         # in case of translated column the columns_hash doesn't hold definition, so no need to check for time type
-        if columns_hash[attr_name] && create_time_zone_conversion_attribute?(attr_name, columns_hash[attr_name])
+        if columns_hash[name] && create_time_zone_conversion_attribute?(name, columns_hash[name])
+          # binding.pry if attr_name == "start_at"
           ActiveModel::AttributeMethods::AttrNames.define_attribute_accessor_method(
             owner, name, writer: true,
           ) do |temp_method_name, attr_name_expr|
-            owner << <<-EOV
-def #{temp_method_name}(original_time)
-  time = original_time
-  unless time.acts_like?(:time)
-    time = time.is_a?(String) ? (I18n.delocalization_enabled? ? Time.zone.parse_localized(time) : Time.zone.parse(time)) : time.to_time rescue time
-  end
-  time = time.in_time_zone rescue nil if time
-  _write_attribute(#{attr_name_expr}, time)
-end
-          EOV
-
+            owner <<
+              "def #{temp_method_name}(original_time)" <<
+              "  time = original_time" <<
+              "  unless time.acts_like?(:time)" <<
+              "    time = time.is_a?(String) ? (I18n.delocalization_enabled? ? Time.zone.parse_localized(time) : Time.zone.parse(time)) : time.to_time rescue time" <<
+              "  end" <<
+              "  time = time.in_time_zone rescue nil if time" <<
+              "  _write_attribute(#{attr_name_expr}, time)" <<
+              "end"
           end
         else
           super
